@@ -49,10 +49,16 @@
 - [x] Groene stippellijn op exact break-even punt (numerieke X-as)
 - [x] Maandlasten vergelijking
 
-## Fase 2 — UX & persistentie
+## Fase 2 — UX & persistentie ✅ versie 1.1 (2026-04-19)
 - [x] LocalStorage persistentie (Zustand persist)
 - [x] Wizard terug/volgende navigatie
 - [x] Voortgangsbalk
+- [x] Dark mode (OS-gebaseerd via prefers-color-scheme)
+- [x] Favicon (public/ev.svg — lightning bolt in groen)
+- [x] Landing page met uitleg + CTA (hasStarted flow)
+- [x] Disclaimer bij resultaat
+- [x] Feedback button in header (mailto modal)
+- [x] animate-fade-in animatie gedefinieerd in CSS
 - [ ] Deel-URL (encoded state in query params)
 - [ ] PDF export
 - [ ] Mobielvriendelijk getest
@@ -69,6 +75,6 @@
 
 ## Laatste werkende staat
 **Branch:** main
-**Tag:** v1.0
+**Tag:** v1.1
 **Datum:** 2026-04-19
-**Beschrijving:** Volledige MVP — alle 5 stappen werkend, RDW-integratie, TCO-berekening met MRB-afbouw, break-even grafiek met maandprecisie
+**Beschrijving:** v1.1 — dark mode (OS), favicon, landing page, feedback button, disclaimer bij resultaat

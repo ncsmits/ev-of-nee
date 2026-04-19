@@ -2,20 +2,20 @@ import { useEffect } from 'react'
 import useAppStore from './store/useAppStore'
 import Header from './components/layout/Header'
 import Wizard from './components/wizard/Wizard'
+import LandingPage from './components/layout/LandingPage'
 
 export default function App() {
-  const currentStep = useAppStore(s => s.currentStep)
+  const hasStarted = useAppStore(s => s.hasStarted)
 
-  // Wacht op Zustand rehydration vanuit localStorage voordat we renderen
   useEffect(() => {
     useAppStore.persist.rehydrate()
   }, [])
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
       <Header />
       <main className="max-w-3xl mx-auto px-4 py-8">
-        <Wizard />
+        {hasStarted ? <Wizard /> : <LandingPage />}
       </main>
     </div>
   )

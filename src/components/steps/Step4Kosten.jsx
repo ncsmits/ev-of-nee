@@ -19,9 +19,8 @@ export default function Step4Kosten({ onNext, onBack }) {
     >
       <div className="space-y-6">
 
-        {/* Aanschaf */}
         <section>
-          <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">
+          <h4 className="text-xs font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-3">
             Aanschaf
           </h4>
           <div className="space-y-3">
@@ -36,9 +35,8 @@ export default function Step4Kosten({ onNext, onBack }) {
           </div>
         </section>
 
-        {/* Laadinfrastructuur */}
         <section>
-          <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">
+          <h4 className="text-xs font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-3">
             Laadinfrastructuur thuis
           </h4>
           <div className="space-y-3">
@@ -68,20 +66,18 @@ export default function Step4Kosten({ onNext, onBack }) {
             />
           </div>
 
-          {/* Netto laadpaal kosten */}
           {(evCosts.wallboxCost + evCosts.installationCost) > 0 && (
-            <div className="mt-3 px-4 py-3 bg-neutral-100 rounded-lg flex justify-between items-center">
-              <span className="text-sm text-neutral-600">Netto laadpaalkosten</span>
-              <span className="font-semibold text-neutral-900">
+            <div className="mt-3 px-4 py-3 bg-neutral-100 dark:bg-neutral-700/50 rounded-lg flex justify-between items-center">
+              <span className="text-sm text-neutral-600 dark:text-neutral-400">Netto laadpaalkosten</span>
+              <span className="font-semibold text-neutral-900 dark:text-neutral-50">
                 € {Math.max(0, evCosts.wallboxCost + evCosts.installationCost - evCosts.wallboxSubsidy).toLocaleString('nl-NL')}
               </span>
             </div>
           )}
         </section>
 
-        {/* Lopende kosten */}
         <section>
-          <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">
+          <h4 className="text-xs font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-3">
             Jaarlijkse kosten
           </h4>
           <div className="space-y-3">

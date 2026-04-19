@@ -36,6 +36,7 @@ const useAppStore = create(
   persist(
     (set, get) => ({
       // === WIZARD STATE ===
+      hasStarted: false,
       currentStep: 0,
       totalSteps: 5,
 
@@ -72,6 +73,7 @@ const useAppStore = create(
       ownershipYears: 5,          // bezitsduur voor TCO-berekening
 
       // === ACTIONS: Wizard navigatie ===
+      startWizard: () => set({ hasStarted: true, currentStep: 0 }),
       nextStep: () => set(state => ({
         currentStep: Math.min(state.currentStep + 1, state.totalSteps - 1)
       })),
@@ -143,6 +145,7 @@ const useAppStore = create(
 
       // === RESET ===
       reset: () => set({
+        hasStarted: true,   // stay in wizard after reset, don't go back to landing
         currentStep: 0,
         iceLicensePlate: '',
         iceVehicleData: null,
@@ -161,6 +164,7 @@ const useAppStore = create(
       name: 'ev-of-nee-v1',  // LocalStorage key
       // Sla alles op behalve de actions (die zijn niet serialiseerbaar nodig)
       partialize: (state) => ({
+        hasStarted: state.hasStarted,
         currentStep: state.currentStep,
         iceLicensePlate: state.iceLicensePlate,
         iceVehicleData: state.iceVehicleData,

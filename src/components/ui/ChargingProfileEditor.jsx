@@ -9,8 +9,8 @@ const CHARGE_TYPES = [
     label: 'Thuis laden',
     description: 'Eigen laadpaal of stopcontact',
     color: 'bg-green-500',
-    colorLight: 'bg-green-100',
-    colorText: 'text-green-700',
+    colorLight: 'bg-green-100 dark:bg-green-900/40',
+    colorText: 'text-green-700 dark:text-green-400',
   },
   {
     key: 'public',
@@ -18,8 +18,8 @@ const CHARGE_TYPES = [
     label: 'Openbare paal',
     description: 'Straatpaal, parkeergarage, werk',
     color: 'bg-blue-500',
-    colorLight: 'bg-blue-100',
-    colorText: 'text-blue-700',
+    colorLight: 'bg-blue-100 dark:bg-blue-900/40',
+    colorText: 'text-blue-700 dark:text-blue-400',
   },
   {
     key: 'fast',
@@ -27,8 +27,8 @@ const CHARGE_TYPES = [
     label: 'Snelladen (DC)',
     description: 'Fastned, Ionity, Tesla Supercharger',
     color: 'bg-orange-500',
-    colorLight: 'bg-orange-100',
-    colorText: 'text-orange-700',
+    colorLight: 'bg-orange-100 dark:bg-orange-900/40',
+    colorText: 'text-orange-700 dark:text-orange-400',
   },
 ]
 
@@ -49,8 +49,7 @@ export default function ChargingProfileEditor({ profile, onChange }) {
 
   return (
     <div>
-      {/* Visuele verdeling balk */}
-      <div className="flex rounded-lg overflow-hidden h-4 mb-5 bg-neutral-200">
+      <div className="flex rounded-lg overflow-hidden h-4 mb-5 bg-neutral-200 dark:bg-neutral-700">
         {CHARGE_TYPES.map(ct => (
           <div
             key={ct.key}
@@ -61,18 +60,17 @@ export default function ChargingProfileEditor({ profile, onChange }) {
         ))}
       </div>
 
-      {/* Per laadtype */}
       <div className="space-y-4">
         {CHARGE_TYPES.map(ct => {
           const entry = profile[ct.key] || { percentage: 0, pricePerKwh: 0 }
           return (
-            <div key={ct.key} className={`rounded-xl border border-neutral-200 p-4`}>
+            <div key={ct.key} className="rounded-xl border border-neutral-200 dark:border-neutral-700 p-4">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <span className="text-xl">{ct.icon}</span>
                   <div>
-                    <p className="font-medium text-neutral-900 text-sm">{ct.label}</p>
-                    <p className="text-xs text-neutral-500">{ct.description}</p>
+                    <p className="font-medium text-neutral-900 dark:text-neutral-50 text-sm">{ct.label}</p>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400">{ct.description}</p>
                   </div>
                 </div>
                 <span className={`text-sm font-bold px-2 py-0.5 rounded-full ${ct.colorLight} ${ct.colorText}`}>
@@ -80,9 +78,8 @@ export default function ChargingProfileEditor({ profile, onChange }) {
                 </span>
               </div>
 
-              {/* Percentage slider */}
               <div className="mb-3">
-                <div className="flex justify-between text-xs text-neutral-400 mb-1">
+                <div className="flex justify-between text-xs text-neutral-400 dark:text-neutral-500 mb-1">
                   <span>Aandeel kilometers</span>
                   <span>{entry.percentage}%</span>
                 </div>
@@ -93,15 +90,14 @@ export default function ChargingProfileEditor({ profile, onChange }) {
                   step={5}
                   value={entry.percentage}
                   onChange={e => onChange(ct.key, { percentage: parseInt(e.target.value) })}
-                  className="w-full accent-neutral-900"
+                  className="w-full accent-neutral-900 dark:accent-neutral-300"
                 />
               </div>
 
-              {/* Prijs per kWh */}
               <div className="flex items-center gap-2">
-                <label className="text-xs text-neutral-500 whitespace-nowrap">Prijs:</label>
-                <div className="flex items-center border border-neutral-300 rounded-lg overflow-hidden flex-1">
-                  <span className="px-2 py-1.5 bg-neutral-100 text-neutral-500 text-xs border-r border-neutral-300">€</span>
+                <label className="text-xs text-neutral-500 dark:text-neutral-400 whitespace-nowrap">Prijs:</label>
+                <div className="flex items-center border border-neutral-300 dark:border-neutral-600 rounded-lg overflow-hidden flex-1">
+                  <span className="px-2 py-1.5 bg-neutral-100 dark:bg-neutral-700 text-neutral-500 dark:text-neutral-400 text-xs border-r border-neutral-300 dark:border-neutral-600">€</span>
                   <input
                     type="number"
                     min={0}
@@ -109,9 +105,9 @@ export default function ChargingProfileEditor({ profile, onChange }) {
                     step={0.01}
                     value={entry.pricePerKwh}
                     onChange={e => onChange(ct.key, { pricePerKwh: parseFloat(e.target.value) })}
-                    className="flex-1 px-2 py-1.5 text-sm text-neutral-900 outline-none"
+                    className="flex-1 px-2 py-1.5 text-sm text-neutral-900 dark:text-neutral-50 outline-none bg-white dark:bg-neutral-900"
                   />
-                  <span className="px-2 py-1.5 bg-neutral-100 text-neutral-500 text-xs border-l border-neutral-300">/kWh</span>
+                  <span className="px-2 py-1.5 bg-neutral-100 dark:bg-neutral-700 text-neutral-500 dark:text-neutral-400 text-xs border-l border-neutral-300 dark:border-neutral-600">/kWh</span>
                 </div>
               </div>
             </div>
@@ -119,23 +115,24 @@ export default function ChargingProfileEditor({ profile, onChange }) {
         })}
       </div>
 
-      {/* Validatie + samenvatting */}
-      <div className={`mt-4 rounded-xl p-4 ${isValid ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+      <div className={`mt-4 rounded-xl p-4 ${isValid
+        ? 'bg-green-50 dark:bg-green-950/50 border border-green-200 dark:border-green-800'
+        : 'bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800'}`}>
         {!isValid ? (
-          <p className="text-sm text-red-700 font-medium">
+          <p className="text-sm text-red-700 dark:text-red-400 font-medium">
             ⚠️ Percentages tellen op tot {totalPercentage}% — moet 100% zijn.
           </p>
         ) : (
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <p className="text-xs text-green-600 mb-0.5">Gewogen gem. laadprijs</p>
-              <p className="text-lg font-bold text-green-800">
+              <p className="text-xs text-green-600 dark:text-green-400 mb-0.5">Gewogen gem. laadprijs</p>
+              <p className="text-lg font-bold text-green-800 dark:text-green-300">
                 € {avgPrice.toFixed(2)}<span className="text-sm font-normal">/kWh</span>
               </p>
             </div>
             <div>
-              <p className="text-xs text-green-600 mb-0.5">Laadkosten per 100 km</p>
-              <p className="text-lg font-bold text-green-800">
+              <p className="text-xs text-green-600 dark:text-green-400 mb-0.5">Laadkosten per 100 km</p>
+              <p className="text-lg font-bold text-green-800 dark:text-green-300">
                 € {costPer100km.toFixed(2)}<span className="text-sm font-normal">/100km</span>
               </p>
             </div>

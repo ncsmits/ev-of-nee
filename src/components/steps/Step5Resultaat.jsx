@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   Legend, ResponsiveContainer, ReferenceLine
@@ -13,6 +13,19 @@ import {
   buildChartData,
 } from '../../utils/calculations'
 
+function usePrefersDark() {
+  const [dark, setDark] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
+  )
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    const handler = e => setDark(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+  return dark
+}
+
 export default function Step5Resultaat({ onBack }) {
   const annualKm = useAppStore(s => s.annualKm)
   const ownershipYears = useAppStore(s => s.ownershipYears)
@@ -21,6 +34,7 @@ export default function Step5Resultaat({ onBack }) {
   const evVehicle = useAppStore(s => s.evVehicle)
   const evCosts = useAppStore(s => s.evCosts)
   const evIsNew = useAppStore(s => s.evIsNew)
+  const isDark = usePrefersDark()
 
   const { iceTco, evTco, breakEven, breakEvenDetails, chartData, switchCost, monthlySaving, avg } = useMemo(() => {
     if (!iceCosts.consumptionLper100km || !evCosts.purchasePrice) return {}
@@ -79,12 +93,10 @@ export default function Step5Resultaat({ onBack }) {
       ownershipYears,
     )
 
-    // Average annual costs per category (averages out the EV MRB phase-in)
     const avg = {
       iceMrb:  Math.round(ice.yearly.reduce((s, y) => s + y.mrb, 0) / ownershipYears),
       evMrb:   Math.round(ev.yearly.reduce((s, y) => s + y.mrb, 0) / ownershipYears),
       iceTotal: Math.round(ice.totalCost / ownershipYears),
-      // wallboxNet is one-time, exclude from annual average
       evTotal:  Math.round((ev.totalCost - ev.wallboxNet) / ownershipYears),
     }
 
@@ -103,7 +115,7 @@ export default function Step5Resultaat({ onBack }) {
   if (!iceTco || !evTco) {
     return (
       <StepShell title="Resultaat" onBack={onBack} canNext={false} isLastStep>
-        <p className="text-neutral-500 text-center py-16">
+        <p className="text-neutral-500 dark:text-neutral-400 text-center py-16">
           Vul eerst stappen 1–4 volledig in.
         </p>
       </StepShell>
@@ -120,6 +132,12 @@ export default function Step5Resultaat({ onBack }) {
     return `${d.years} jaar en ${d.months} maanden`
   }
 
+  const chartGridColor   = isDark ? '#3f3f46' : '#e4e4e7'
+  const chartTickColor   = isDark ? '#a1a1aa' : '#71717a'
+  const tooltipBg        = isDark ? '#27272a' : '#ffffff'
+  const tooltipBorder    = isDark ? '#3f3f46' : '#e4e4e7'
+  const tooltipTextColor = isDark ? '#f4f4f5' : '#18181b'
+
   return (
     <StepShell
       title="Jouw resultaat"
@@ -130,18 +148,22 @@ export default function Step5Resultaat({ onBack }) {
     >
       {/* Verdict */}
       <div className={`rounded-xl p-5 mb-6 border ${
-        evWinsInPeriod    ? 'bg-green-50 border-green-200' :
-        evWinsEventually  ? 'bg-red-50 border-red-200' :
-                            'bg-orange-50 border-orange-200'
+        evWinsInPeriod    ? 'bg-green-50 dark:bg-green-950/50 border-green-200 dark:border-green-800' :
+        evWinsEventually  ? 'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-800' :
+                            'bg-orange-50 dark:bg-orange-950/50 border-orange-200 dark:border-orange-800'
       }`}>
-        <p className="text-lg font-bold mb-1" style={{ fontFamily: 'var(--font-display)' }}>
+        <p className="text-lg font-bold mb-1 text-neutral-900 dark:text-neutral-50" style={{ fontFamily: 'var(--font-display)' }}>
           {evWinsInPeriod
             ? `⚡ Een EV is voordeliger — break-even na ${fmtBreakEven(breakEvenDetails)}`
             : evWinsEventually
             ? `⚡ Een EV is voordeliger, maar pas na ${fmtBreakEven(breakEvenDetails)}`
             : '⛽ Jouw huidige auto is voordeliger'}
         </p>
-        <p className={`text-sm ${evWinsInPeriod ? 'text-neutral-600' : evWinsEventually ? 'text-red-700' : 'text-neutral-600'}`}>
+        <p className={`text-sm ${
+          evWinsInPeriod   ? 'text-neutral-600 dark:text-neutral-300' :
+          evWinsEventually ? 'text-red-700 dark:text-red-400' :
+                             'text-neutral-600 dark:text-neutral-300'
+        }`}>
           {evWinsInPeriod
             ? `Je bespaart gemiddeld € ${Math.abs(monthlySaving).toLocaleString('nl-NL')}/maand op lopende kosten.`
             : evWinsEventually
@@ -153,7 +175,7 @@ export default function Step5Resultaat({ onBack }) {
       {/* KPI's */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         <KpiCard label="TCO Huidige auto" value={`€ ${Math.round(iceTco.totalCost / 1000)}k`} sub={`${ownershipYears}j totaal`} color="orange" />
-        <KpiCard label="TCO EV" value={`€ ${Math.round((evTco.totalCost + switchCost) / 1000)}k`} sub={`incl. aanschaf`} color="green" />
+        <KpiCard label="TCO EV" value={`€ ${Math.round((evTco.totalCost + switchCost) / 1000)}k`} sub="incl. aanschaf" color="green" />
         <KpiCard
           label="Break-even"
           value={breakEvenDetails ? fmtBreakEven(breakEvenDetails) : 'Nooit'}
@@ -165,34 +187,36 @@ export default function Step5Resultaat({ onBack }) {
 
       {/* Grafiek */}
       <div className="mb-6">
-        <h4 className="text-sm font-semibold text-neutral-700 mb-1">
+        <h4 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
           Cumulatieve kosten over tijd
         </h4>
-        <p className="text-xs text-neutral-400 mb-3">
+        <p className="text-xs text-neutral-400 dark:text-neutral-500 mb-3">
           Jaar 0 = initiële investering (aanschaf EV − opbrengst huidige auto + laadpaal). Lopende kosten tellen daarna op.
         </p>
         <ResponsiveContainer width="100%" height={260}>
           <LineChart data={chartData} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
+            <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} />
             <XAxis
               dataKey="jaar"
               type="number"
               domain={[0, ownershipYears]}
               ticks={Array.from({ length: ownershipYears + 1 }, (_, i) => i)}
               tickFormatter={v => `Jaar ${v}`}
-              tick={{ fontSize: 11, fill: '#71717a' }}
+              tick={{ fontSize: 11, fill: chartTickColor }}
             />
             <YAxis
               tickFormatter={v => `€${Math.round(v / 1000)}k`}
-              tick={{ fontSize: 11, fill: '#71717a' }}
+              tick={{ fontSize: 11, fill: chartTickColor }}
               width={52}
             />
             <Tooltip
               formatter={(value) => [`€ ${Math.round(value).toLocaleString('nl-NL')}`, undefined]}
               labelFormatter={v => `Jaar ${v}`}
-              labelStyle={{ fontWeight: 600 }}
+              contentStyle={{ backgroundColor: tooltipBg, borderColor: tooltipBorder, borderRadius: '8px' }}
+              labelStyle={{ fontWeight: 600, color: tooltipTextColor }}
+              itemStyle={{ color: tooltipTextColor }}
             />
-            <Legend />
+            <Legend wrapperStyle={{ color: isDark ? '#d4d4d8' : '#3f3f46' }} />
             {breakEvenDetails && (
               <ReferenceLine
                 x={breakEvenDetails.years + breakEvenDetails.months / 12}
@@ -222,21 +246,21 @@ export default function Step5Resultaat({ onBack }) {
       </div>
 
       {/* Jaartabel */}
-      <div>
-        <h4 className="text-sm font-semibold text-neutral-700 mb-1">Gemiddelde jaarkosten (lopend)</h4>
-        <p className="text-xs text-neutral-400 mb-3">
+      <div className="mb-6">
+        <h4 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-1">Gemiddelde jaarkosten (lopend)</h4>
+        <p className="text-xs text-neutral-400 dark:text-neutral-500 mb-3">
           Gemiddeld over {ownershipYears} jaar. EV-MRB stijgt t/m 2028 door afbouw vrijstelling — dit is het gemiddelde.
         </p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-neutral-200">
-                <th className="text-left py-2 text-neutral-500 font-medium">Kostenpost</th>
+              <tr className="border-b border-neutral-200 dark:border-neutral-700">
+                <th className="text-left py-2 text-neutral-500 dark:text-neutral-400 font-medium">Kostenpost</th>
                 <th className="text-right py-2 text-orange-600 font-medium">Huidige auto / jaar</th>
-                <th className="text-right py-2 text-green-700 font-medium">EV / jaar</th>
+                <th className="text-right py-2 text-green-700 dark:text-green-500 font-medium">EV / jaar</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-100">
+            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-700">
               <TRow label="Brandstof / laden"
                 ice={iceTco.yearly[0]?.fuel}
                 ev={evTco.yearly[0]?.charging} />
@@ -252,12 +276,12 @@ export default function Step5Resultaat({ onBack }) {
               <TRow label="Laadabonnement"
                 ice={0}
                 ev={(evCosts.chargingSubscriptionPerMonth || 0) * 12} />
-              <tr className="border-t-2 border-neutral-300">
-                <td className="py-2 font-semibold text-neutral-900">Gemiddeld per jaar</td>
+              <tr className="border-t-2 border-neutral-300 dark:border-neutral-600">
+                <td className="py-2 font-semibold text-neutral-900 dark:text-neutral-50">Gemiddeld per jaar</td>
                 <td className="py-2 text-right font-semibold text-orange-600">
                   € {(avg?.iceTotal || 0).toLocaleString('nl-NL')}
                 </td>
-                <td className="py-2 text-right font-semibold text-green-700">
+                <td className="py-2 text-right font-semibold text-green-700 dark:text-green-500">
                   € {(avg?.evTotal || 0).toLocaleString('nl-NL')}
                 </td>
               </tr>
@@ -265,22 +289,29 @@ export default function Step5Resultaat({ onBack }) {
           </table>
         </div>
       </div>
+
+      {/* Disclaimer */}
+      <p className="text-xs text-neutral-400 dark:text-neutral-500 border-t border-neutral-100 dark:border-neutral-700 pt-4 leading-relaxed">
+        Deze berekening is een indicatie op basis van de door jou ingevoerde gegevens en gemiddelde marktprijzen.
+        Werkelijke kosten kunnen afwijken door brandstofprijsschommelingen, persoonlijk rijgedrag en regionale verschillen.
+        EV of Nee? is niet aansprakelijk voor financiële beslissingen op basis van deze tool.
+      </p>
     </StepShell>
   )
 }
 
 function KpiCard({ label, value, sub, color }) {
   const colors = {
-    green: 'bg-green-50 border-green-200',
-    orange: 'bg-orange-50 border-orange-200',
-    red: 'bg-red-50 border-red-200',
-    neutral: 'bg-neutral-50 border-neutral-200',
+    green:   'bg-green-50 dark:bg-green-950/50 border-green-200 dark:border-green-800',
+    orange:  'bg-orange-50 dark:bg-orange-950/50 border-orange-200 dark:border-orange-800',
+    red:     'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-800',
+    neutral: 'bg-neutral-50 dark:bg-neutral-700/50 border-neutral-200 dark:border-neutral-700',
   }
   return (
     <div className={`rounded-xl border p-3 ${colors[color] || colors.neutral}`}>
-      <p className="text-xs text-neutral-500 mb-1">{label}</p>
-      <p className="text-lg font-bold text-neutral-900" style={{ fontFamily: 'var(--font-display)' }}>{value}</p>
-      <p className="text-xs text-neutral-400">{sub}</p>
+      <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">{label}</p>
+      <p className="text-lg font-bold text-neutral-900 dark:text-neutral-50" style={{ fontFamily: 'var(--font-display)' }}>{value}</p>
+      <p className="text-xs text-neutral-400 dark:text-neutral-500">{sub}</p>
     </div>
   )
 }
@@ -288,9 +319,9 @@ function KpiCard({ label, value, sub, color }) {
 function TRow({ label, ice, ev }) {
   return (
     <tr>
-      <td className="py-2 text-neutral-600">{label}</td>
-      <td className="py-2 text-right text-neutral-700">€ {Math.round(ice || 0).toLocaleString('nl-NL')}</td>
-      <td className="py-2 text-right text-neutral-700">€ {Math.round(ev || 0).toLocaleString('nl-NL')}</td>
+      <td className="py-2 text-neutral-600 dark:text-neutral-400">{label}</td>
+      <td className="py-2 text-right text-neutral-700 dark:text-neutral-300">€ {Math.round(ice || 0).toLocaleString('nl-NL')}</td>
+      <td className="py-2 text-right text-neutral-700 dark:text-neutral-300">€ {Math.round(ev || 0).toLocaleString('nl-NL')}</td>
     </tr>
   )
 }

@@ -66,6 +66,7 @@ export default function Step3EvKeuze({ onNext, onBack }) {
       onBack={onBack}
       canNext={canContinue}
     >
+      {/* Nieuw / Tweedehands toggle */}
       <div className="flex gap-2 mb-6">
         {[{ value: false, label: '🔄 Tweedehands' }, { value: true, label: '✨ Nieuw' }].map(opt => (
           <button key={String(opt.value)} onClick={() => {
@@ -73,13 +74,16 @@ export default function Step3EvKeuze({ onNext, onBack }) {
             if (opt.value && inputMode === 'plate') setInputMode('popular')
           }}
             className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all
-              ${evIsNew === opt.value ? 'bg-neutral-900 text-white' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'}`}>
+              ${evIsNew === opt.value
+                ? 'bg-neutral-900 dark:bg-neutral-50 text-white dark:text-neutral-900'
+                : 'bg-neutral-100 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600'}`}>
             {opt.label}
           </button>
         ))}
       </div>
 
-      <div className="flex gap-1 bg-neutral-100 rounded-lg p-1 mb-5">
+      {/* Tab bar */}
+      <div className="flex gap-1 bg-neutral-100 dark:bg-neutral-700 rounded-lg p-1 mb-5">
         {[
           ...(!evIsNew ? [{ key: 'plate', label: 'Kenteken' }] : []),
           { key: 'popular', label: 'Populaire modellen' },
@@ -87,7 +91,9 @@ export default function Step3EvKeuze({ onNext, onBack }) {
         ].map(tab => (
           <button key={tab.key} onClick={() => setInputMode(tab.key)}
             className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all
-              ${inputMode === tab.key ? 'bg-white shadow-sm text-neutral-900' : 'text-neutral-500'}`}>
+              ${inputMode === tab.key
+                ? 'bg-white dark:bg-neutral-800 shadow-sm text-neutral-900 dark:text-neutral-50'
+                : 'text-neutral-500 dark:text-neutral-400'}`}>
             {tab.label}
           </button>
         ))}
@@ -98,11 +104,12 @@ export default function Step3EvKeuze({ onNext, onBack }) {
           <div className="flex gap-3">
             <LicensePlateInput value={evLicensePlate} onChange={setEvLicensePlate} onEnter={handleLookup} />
             <button onClick={handleLookup} disabled={loading || !evLicensePlate}
-              className="px-4 py-2.5 bg-neutral-900 text-white rounded-lg text-sm font-medium hover:bg-neutral-700 disabled:opacity-40 transition-colors whitespace-nowrap">
+              className="px-4 py-2.5 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 rounded-lg text-sm font-medium
+                         hover:bg-neutral-700 dark:hover:bg-neutral-200 disabled:opacity-40 transition-colors whitespace-nowrap">
               {loading ? 'Ophalen...' : 'Opzoeken'}
             </button>
           </div>
-          {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+          {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
         </div>
       )}
 
@@ -112,20 +119,21 @@ export default function Step3EvKeuze({ onNext, onBack }) {
             <button key={ev.model} onClick={() => selectPopular(ev)}
               className={`text-left p-3 rounded-xl border transition-all
                 ${evVehicle.brand === ev.brand && evVehicle.model === ev.model
-                  ? 'border-green-600 bg-green-50' : 'border-neutral-200 hover:border-neutral-400'}`}>
-              <p className="text-sm font-medium text-neutral-900">{ev.brand} {ev.model}</p>
-              <p className="text-xs text-neutral-500 mt-0.5">{ev.consumptionKwhPer100km} kWh/100km · {ev.rangeKm} km WLTP</p>
+                  ? 'border-green-600 bg-green-50 dark:bg-green-950/50'
+                  : 'border-neutral-200 dark:border-neutral-700 hover:border-neutral-400 dark:hover:border-neutral-500'}`}>
+              <p className="text-sm font-medium text-neutral-900 dark:text-neutral-50">{ev.brand} {ev.model}</p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{ev.consumptionKwhPer100km} kWh/100km · {ev.rangeKm} km WLTP</p>
             </button>
           ))}
         </div>
       )}
 
       {hasVehicle && (
-        <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-5">
+        <div className="bg-green-50 dark:bg-green-950/50 border border-green-200 dark:border-green-800 rounded-xl p-4 mb-5">
           <div className="flex items-center gap-2">
             <span>⚡</span>
-            <span className="font-semibold">{evVehicle.brand} {evVehicle.model}</span>
-            {evVehicle.year && <span className="text-neutral-500 text-sm">({evVehicle.year})</span>}
+            <span className="font-semibold text-neutral-900 dark:text-neutral-50">{evVehicle.brand} {evVehicle.model}</span>
+            {evVehicle.year && <span className="text-neutral-500 dark:text-neutral-400 text-sm">({evVehicle.year})</span>}
           </div>
         </div>
       )}

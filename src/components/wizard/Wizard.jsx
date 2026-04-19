@@ -17,15 +17,14 @@ export default function Wizard() {
   const currentStep = useAppStore(s => s.currentStep)
   const nextStep = useAppStore(s => s.nextStep)
   const prevStep = useAppStore(s => s.prevStep)
+  const goToStep = useAppStore(s => s.goToStep)
 
   const StepComponent = STEPS[currentStep]?.component || null
 
   return (
     <div>
-      {/* Voortgangsbalk */}
-      <ProgressBar current={currentStep} total={STEPS.length} steps={STEPS} />
+      <ProgressBar current={currentStep} total={STEPS.length} steps={STEPS} onGoTo={goToStep} />
 
-      {/* Stap content */}
       <div className="mt-8">
         {StepComponent ? (
           <StepComponent onNext={nextStep} onBack={prevStep} />
@@ -37,40 +36,54 @@ export default function Wizard() {
   )
 }
 
-function ProgressBar({ current, total, steps }) {
+function ProgressBar({ current, total, steps, onGoTo }) {
   return (
     <div>
-      {/* Stap-indicator */}
       <div className="flex items-center gap-0">
-        {steps.map((step, i) => (
-          <div key={i} className="flex items-center flex-1 last:flex-none">
-            <div className="flex flex-col items-center">
-              <div
-                className={`
-                  w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold
-                  transition-all duration-300
-                  ${i < current ? 'bg-green-600 text-white' : ''}
-                  ${i === current ? 'bg-neutral-900 text-white ring-4 ring-neutral-900/20' : ''}
-                  ${i > current ? 'bg-neutral-200 text-neutral-500' : ''}
+        {steps.map((step, i) => {
+          const isCompleted = i < current
+          const isCurrent = i === current
+          return (
+            <div key={i} className="flex items-center flex-1 last:flex-none">
+              <div className="flex flex-col items-center">
+                <button
+                  onClick={() => isCompleted && onGoTo(i)}
+                  disabled={!isCompleted}
+                  title={isCompleted ? `Ga naar: ${step.label}` : undefined}
+                  className={`
+                    w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold
+                    transition-all duration-300 disabled:cursor-default
+                    ${isCompleted ? 'bg-green-600 text-white hover:bg-green-700 cursor-pointer' : ''}
+                    ${isCurrent
+                      ? 'bg-neutral-900 dark:bg-neutral-50 text-white dark:text-neutral-900 ring-4 ring-neutral-900/20 dark:ring-neutral-50/20'
+                      : ''}
+                    ${i > current ? 'bg-neutral-200 dark:bg-neutral-700 text-neutral-500 dark:text-neutral-400' : ''}
+                  `}
+                >
+                  {isCompleted ? '✓' : i + 1}
+                </button>
+                <span className={`
+                  text-xs mt-1 whitespace-nowrap hidden sm:block transition-colors
+                  ${isCurrent
+                    ? 'text-neutral-900 dark:text-neutral-50 font-medium'
+                    : isCompleted
+                    ? 'text-green-700 dark:text-green-500 hover:underline cursor-pointer'
+                    : 'text-neutral-400 dark:text-neutral-500'}
                 `}
-              >
-                {i < current ? '✓' : i + 1}
+                  onClick={() => isCompleted && onGoTo(i)}
+                >
+                  {step.label}
+                </span>
               </div>
-              <span className={`
-                text-xs mt-1 whitespace-nowrap hidden sm:block
-                ${i === current ? 'text-neutral-900 font-medium' : 'text-neutral-400'}
-              `}>
-                {step.label}
-              </span>
+              {i < steps.length - 1 && (
+                <div className={`
+                  flex-1 h-0.5 mx-2 mb-4 transition-all duration-300
+                  ${i < current ? 'bg-green-600' : 'bg-neutral-200 dark:bg-neutral-700'}
+                `} />
+              )}
             </div>
-            {i < steps.length - 1 && (
-              <div className={`
-                flex-1 h-0.5 mx-2 mb-4 transition-all duration-300
-                ${i < current ? 'bg-green-600' : 'bg-neutral-200'}
-              `} />
-            )}
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

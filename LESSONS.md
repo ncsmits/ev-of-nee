@@ -73,3 +73,20 @@
 ## Subsidies
 
 - SEPP (aanschafsubsidie particulieren) is per 2026 afgeschaft — niet meer tonen in de UI.
+
+## Dark mode
+
+- Tailwind v4 ondersteunt `dark:` variant standaard via `@media (prefers-color-scheme: dark)` — geen
+  extra configuratie nodig.
+- Voor Recharts (inline stroke/fill stijlen) werken `dark:` Tailwind classes niet. Oplossing: een
+  `usePrefersDark()` hook die `window.matchMedia` gebruikt, en de waarden als JS-variabelen doorgeven
+  aan `stroke`, `fill`, en `contentStyle` props.
+- LicensePlateInput behoudt bewust zijn gele achtergrond in dark mode — dit is een visuele representatie
+  van de echte NL kentekenplaat, geen generiek UI-element.
+- `hasStarted` in Zustand store bepaalt of landing page of wizard getoond wordt. `reset()` zet
+  `hasStarted: true` zodat gebruiker na reset direct terug in de wizard gaat (niet landing page).
+
+## Feedback mechanisme
+
+- Eenvoudigste aanpak zonder backend: mailto: link met pre-filled subject en body vanuit textarea.
+  Modal opent mailto: in de browser's default mailclient. Geen CORS/API issues.

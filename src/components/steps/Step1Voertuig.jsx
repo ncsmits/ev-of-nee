@@ -7,7 +7,6 @@ import FieldRow from '../ui/FieldRow'
 
 const FUEL_TYPES = ['Benzine', 'Diesel', 'LPG', 'Benzine/Elektrisch (PHEV)']
 
-// NL gemiddelde pompprijzen april 2026
 const FUEL_PRICE_DEFAULTS = { benzine: 2.32, diesel: 2.53, lpg: 1.05 }
 
 function defaultFuelPrice(fuelType) {
@@ -59,7 +58,6 @@ export default function Step1Voertuig({ onNext, onBack }) {
 
   function enableManual() {
     setManualMode(true)
-    // Seed with empty vehicle so the form fields render
     if (!iceVehicle.brand) {
       updateIceVehicle({ brand: ' ', model: '', year: null, fuelType: 'Benzine', weightKg: null })
     }
@@ -79,7 +77,7 @@ export default function Step1Voertuig({ onNext, onBack }) {
     >
       {/* Kenteken lookup */}
       <div className="mb-4">
-        <label className="block text-sm font-medium text-neutral-700 mb-2">
+        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
           Kenteken opzoeken
         </label>
         <div className="flex gap-3">
@@ -91,23 +89,25 @@ export default function Step1Voertuig({ onNext, onBack }) {
           <button
             onClick={handleLookup}
             disabled={loading || !iceLicensePlate}
-            className="px-4 py-2.5 bg-neutral-900 text-white rounded-lg text-sm font-medium
-                       hover:bg-neutral-700 disabled:opacity-40 disabled:cursor-not-allowed
+            className="px-4 py-2.5 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900
+                       rounded-lg text-sm font-medium
+                       hover:bg-neutral-700 dark:hover:bg-neutral-200
+                       disabled:opacity-40 disabled:cursor-not-allowed
                        transition-colors whitespace-nowrap"
           >
             {loading ? 'Ophalen...' : 'Opzoeken'}
           </button>
         </div>
-        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>
 
       {/* Handmatig invullen knop */}
       {!hasVehicle && !loading && (
         <div className="text-center mb-6">
-          <span className="text-sm text-neutral-400">of </span>
+          <span className="text-sm text-neutral-400"> of </span>
           <button
             onClick={enableManual}
-            className="text-sm text-neutral-700 underline underline-offset-2 hover:text-neutral-900"
+            className="text-sm text-neutral-700 dark:text-neutral-300 underline underline-offset-2 hover:text-neutral-900 dark:hover:text-neutral-50"
           >
             merk en model handmatig invullen
           </button>
@@ -116,29 +116,29 @@ export default function Step1Voertuig({ onNext, onBack }) {
 
       {/* Voertuigdata na lookup */}
       {hasVehicle && !manualMode && (
-        <div className="bg-neutral-100 rounded-xl p-4 mb-6">
+        <div className="bg-neutral-100 dark:bg-neutral-700/50 rounded-xl p-4 mb-6">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <span className="text-lg">🚗</span>
-              <span className="font-semibold text-neutral-900">
+              <span className="font-semibold text-neutral-900 dark:text-neutral-50">
                 {iceVehicle.brand} {iceVehicle.model}
               </span>
-              {iceVehicle.year && <span className="text-neutral-500 text-sm">({iceVehicle.year})</span>}
+              {iceVehicle.year && <span className="text-neutral-500 dark:text-neutral-400 text-sm">({iceVehicle.year})</span>}
             </div>
           </div>
           {!iceVehicle.fuelType && (
-            <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
+            <p className="text-sm text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2 mb-3">
               ⚠️ Brandstoftype niet gevonden — klik opnieuw op "Opzoeken" om MRB correct te berekenen.
             </p>
           )}
-          <div className="grid grid-cols-2 gap-2 text-sm text-neutral-600">
-            <span>Brandstof: <strong className="text-neutral-900">{iceVehicle.fuelType || '—'}</strong></span>
-            <span>Gewicht: <strong className="text-neutral-900">{iceVehicle.weightKg ? `${iceVehicle.weightKg} kg` : 'onbekend'}</strong></span>
+          <div className="grid grid-cols-2 gap-2 text-sm text-neutral-600 dark:text-neutral-400">
+            <span>Brandstof: <strong className="text-neutral-900 dark:text-neutral-50">{iceVehicle.fuelType || '—'}</strong></span>
+            <span>Gewicht: <strong className="text-neutral-900 dark:text-neutral-50">{iceVehicle.weightKg ? `${iceVehicle.weightKg} kg` : 'onbekend'}</strong></span>
             {iceVehicle.catalogPrice && (
-              <span>Nieuwprijs: <strong className="text-neutral-900">€ {iceVehicle.catalogPrice.toLocaleString('nl-NL')}</strong></span>
+              <span>Nieuwprijs: <strong className="text-neutral-900 dark:text-neutral-50">€ {iceVehicle.catalogPrice.toLocaleString('nl-NL')}</strong></span>
             )}
             {iceVehicle.estimatedCurrentValue && (
-              <span>Geschatte waarde: <strong className="text-neutral-900">€ {iceVehicle.estimatedCurrentValue.toLocaleString('nl-NL')}</strong></span>
+              <span>Geschatte waarde: <strong className="text-neutral-900 dark:text-neutral-50">€ {iceVehicle.estimatedCurrentValue.toLocaleString('nl-NL')}</strong></span>
             )}
           </div>
         </div>
@@ -146,19 +146,20 @@ export default function Step1Voertuig({ onNext, onBack }) {
 
       {/* Handmatige merk/model invoer */}
       {manualMode && (
-        <div className="bg-neutral-100 rounded-xl p-4 mb-6 space-y-3">
-          <p className="text-xs text-neutral-500 font-medium uppercase tracking-wide">Voertuig handmatig invullen</p>
+        <div className="bg-neutral-100 dark:bg-neutral-700/50 rounded-xl p-4 mb-6 space-y-3">
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium uppercase tracking-wide">Voertuig handmatig invullen</p>
 
-          {/* Merk met datalist suggesties */}
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1">Merk</label>
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Merk</label>
             <input
               type="text"
               list="car-brands"
               value={iceVehicle.brand?.trim() || ''}
               onChange={e => updateIceVehicle({ brand: e.target.value })}
               placeholder="bijv. Volkswagen"
-              className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 focus:border-neutral-900 outline-none text-sm"
+              className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 dark:border-neutral-600
+                         bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-50
+                         focus:border-neutral-900 dark:focus:border-neutral-300 outline-none text-sm"
             />
             <datalist id="car-brands">
               {CAR_BRANDS.map(b => <option key={b} value={b} />)}
@@ -180,16 +181,17 @@ export default function Step1Voertuig({ onNext, onBack }) {
             placeholder="bijv. 2019"
           />
 
-          {/* Brandstoftype dropdown */}
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1">Brandstoftype</label>
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Brandstoftype</label>
             <select
               value={iceVehicle.fuelType || 'Benzine'}
               onChange={e => {
                 updateIceVehicle({ fuelType: e.target.value })
                 updateIceCosts({ fuelPricePerLiter: defaultFuelPrice(e.target.value) })
               }}
-              className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 focus:border-neutral-900 outline-none text-sm bg-white"
+              className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 dark:border-neutral-600
+                         bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-50
+                         focus:border-neutral-900 dark:focus:border-neutral-300 outline-none text-sm"
             >
               {FUEL_TYPES.map(f => <option key={f} value={f}>{f}</option>)}
             </select>
@@ -206,7 +208,6 @@ export default function Step1Voertuig({ onNext, onBack }) {
         </div>
       )}
 
-      {/* Overige invoervelden — tonen als voertuig bekend */}
       {hasVehicle && (
         <div className="space-y-4">
           <FieldRow

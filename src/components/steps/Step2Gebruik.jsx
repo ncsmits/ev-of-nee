@@ -43,11 +43,11 @@ export default function Step2Gebruik({ onNext, onBack }) {
 
       {/* Laadprofiel — TOP EIS */}
       <div>
-        <h3 className="font-semibold text-neutral-900 mb-1"
+        <h3 className="font-semibold text-neutral-900 dark:text-neutral-50 mb-1"
             style={{ fontFamily: 'var(--font-display)' }}>
           Laadprofiel
         </h3>
-        <p className="text-sm text-neutral-500 mb-4">
+        <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
           Verdeel hoe jij een EV zou laden. De percentages moeten optellen tot 100%.
         </p>
         <ChargingProfileEditor
