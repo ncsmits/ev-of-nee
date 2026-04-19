@@ -90,3 +90,16 @@
 
 - Eenvoudigste aanpak zonder backend: mailto: link met pre-filled subject en body vanuit textarea.
   Modal opent mailto: in de browser's default mailclient. Geen CORS/API issues.
+
+## Analytics & content blockers
+
+- Content blockers (uBlock Origin, AdGuard) blokkeren bestanden op basis van bestandsnaam in de URL.
+  In Vite dev mode worden bestanden individueel geserveerd — verdachte namen worden direct geblokkeerd.
+  In production zijn bestanden gebundeld met gehashte namen, dus minder gevoelig.
+- Geblokkeerde bestandsnamen die een witte pagina veroorzaakten (statische imports):
+  `CookieConsent.jsx` ("Cookie"), `consent.js` ("consent"), `analytics.js` ("analytics")
+- Oplossing: neutrale namen gebruiken — `Notice.jsx`, `prefs.js`, `stats.js`
+- GA-code (strings zoals `googletagmanager`, `gtag`, `dataLayer`) altijd in een dynamisch geïmporteerde
+  chunk zetten zodat blokkering ervan de app niet crashed. Gebruik `.catch(() => {})` op alle dynamic imports.
+- `window.onerror` vangt geen gefaalde ES module imports op. Gebruik een setTimeout-check om te
+  detecteren of de app niet geladen is, en de Network tab in DevTools om het geblokkeerde bestand te vinden.

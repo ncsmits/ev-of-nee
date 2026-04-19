@@ -62,10 +62,17 @@
 - [x] Klikbare voltooide stappen in voortgangsbalk (directe navigatie)
 - [ ] Mobielvriendelijk getest
 
-## Fase 3 — Berekeningen uitbreiden (versie 1.2)
-- [ ] Financieringskosten (togglebaar, annuïteitenmethode)
-- [ ] Alternatief rendement / vermogenskosten (togglebaar)
-- [ ] Mobielvriendelijkheid doorlopen en fixen
+## Fase 3 — Berekeningen & lancering ✅ versie 1.2 (2026-04-19)
+- [x] Financieringskosten (togglebaar, annuïteitenmethode)
+- [x] Alternatief rendement / opportuniteitskosten (togglebaar)
+- [x] Waarschuwing bij elektrisch voertuig in stap 1
+- [x] SEO: title, meta description, Open Graph, Twitter Card, canonical
+- [x] OG-image (1200×630 SVG), robots.txt, sitemap.xml
+- [x] www → non-www redirect in .htaccess
+- [x] GA4 analytics (code-split, content-blocker-safe)
+- [x] GDPR cookiebanner (content-blocker-proof bestandsnamen)
+- [x] Privacy-tekst bijgewerkt op landing page
+- [ ] Mobielvriendelijkheid getest
 
 ## Fase 4 — Backlog
 - [ ] Deel-URL (encoded state in query params) — nice to have
@@ -80,6 +87,6 @@
 
 ## Laatste werkende staat
 **Branch:** main
-**Tag:** v1.1
+**Tag:** v1.2.0
 **Datum:** 2026-04-19
-**Beschrijving:** v1.1 — dark mode (OS), favicon, landing page, feedback button, disclaimer bij resultaat
+**Beschrijving:** v1.2 — financiering, opportuniteitskosten, SEO, GA4 analytics, cookiebanner, EV-waarschuwing
