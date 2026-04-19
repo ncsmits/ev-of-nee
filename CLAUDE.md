@@ -19,15 +19,15 @@ src/
 ├── api/
 │   └── rdw.js          # RDW Open Data API calls
 ├── store/
-│   └── useAppStore.js  # Zustand store (alle gebruikersinvoer)
+│   └── useAppStore.js  # Zustand store (alle gebruikersinvoer + hasStarted flag)
 ├── utils/
 │   └── calculations.js # Alle rekenlogica (pure functions)
 ├── components/
-│   ├── layout/         # Header, Footer, PageShell
-│   ├── wizard/         # Wizard-shell + navigatie
-│   ├── steps/          # Één component per stap
-│   └── ui/             # Herbruikbare UI-elementen
-└── App.jsx
+│   ├── layout/         # Header, LandingPage
+│   ├── wizard/         # Wizard-shell + voortgangsbalk (klikbare voltooide stappen)
+│   ├── steps/          # Één component per stap (Step1–Step5)
+│   └── ui/             # StepShell, FieldRow, FeedbackButton, ChargingProfileEditor, etc.
+└── App.jsx             # Toont LandingPage als !hasStarted, anders Wizard
 ```
 
 ## Architectuurregels (ALTIJD volgen)

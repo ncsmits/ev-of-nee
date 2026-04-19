@@ -59,6 +59,7 @@
 - [x] Disclaimer bij resultaat
 - [x] Feedback button in header (mailto modal)
 - [x] animate-fade-in animatie gedefinieerd in CSS
+- [x] Klikbare voltooide stappen in voortgangsbalk (directe navigatie)
 - [ ] Deel-URL (encoded state in query params)
 - [ ] PDF export
 - [ ] Mobielvriendelijk getest
