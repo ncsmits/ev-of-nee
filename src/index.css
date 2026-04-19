@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: 'Syne', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+
+  --color-ev-green: #16a34a;
+  --color-ev-green-light: #dcfce7;
+  --color-ev-green-dark: #14532d;
+  --color-fuel-orange: #ea580c;
+  --color-fuel-orange-light: #ffedd5;
+  --color-neutral-50: #fafafa;
+  --color-neutral-100: #f4f4f5;
+  --color-neutral-200: #e4e4e7;
+  --color-neutral-700: #3f3f46;
+  --color-neutral-900: #18181b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-neutral-50);
+  color: var(--color-neutral-900);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+}
+
+/* Wizard step transition */
+.step-enter {
+  opacity: 0;
+  transform: translateX(24px);
+}
+.step-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: all 280ms ease-out;
+}
+.step-exit {
+  opacity: 1;
+  transform: translateX(0);
+}
+.step-exit-active {
+  opacity: 0;
+  transform: translateX(-24px);
+  transition: all 280ms ease-in;
+}
