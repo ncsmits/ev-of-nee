@@ -107,6 +107,43 @@ export function annualFuelCost(annualKm, consumptionLper100km, pricePerLiter) {
 }
 
 // ============================================================
+// Financieringskosten
+// ============================================================
+
+/**
+ * Berekent totale rentekosten op basis van annuïteitenmethode
+ * @param {number} principal - leenbedrag
+ * @param {number} termYears - looptijd in jaren
+ * @param {number} annualRatePercent - jaarlijkse rente in %
+ * @returns {number} totale rentekosten (boven op het leenbedrag)
+ */
+export function calculateFinancingInterest(principal, termYears, annualRatePercent) {
+  if (!principal || !termYears || !annualRatePercent) return 0
+  const r = annualRatePercent / 100 / 12
+  const n = termYears * 12
+  if (r === 0) return 0
+  const monthlyPayment = principal * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1)
+  return Math.round(monthlyPayment * n - principal)
+}
+
+// ============================================================
+// Vermogenskosten (opportunity cost)
+// ============================================================
+
+/**
+ * Cumulatieve gederfd beleggingsrendement na N jaar
+ * @param {number} initialOutlay - initieel geïnvesteerd bedrag (switchCost + wallboxNet)
+ * @param {number} annualReturnPercent - verwacht jaarlijks rendement in %
+ * @param {number} years
+ * @returns {number} totaal gemist rendement
+ */
+export function cumulativeOpportunityCost(initialOutlay, annualReturnPercent, years) {
+  if (!initialOutlay || !annualReturnPercent || !years) return 0
+  const r = annualReturnPercent / 100
+  return Math.round(initialOutlay * (Math.pow(1 + r, years) - 1))
+}
+
+// ============================================================
 // Afschrijving
 // ============================================================
 
@@ -212,6 +249,9 @@ export function calculateEvTco(params) {
     chargingSubscriptionPerMonth,
     seppSubsidy,
     seppApplicable,
+    financingEnabled,
+    financingTermYears,
+    financingInterestTotal,
   } = params
 
   // Eenmalige aanloopkosten
@@ -222,12 +262,19 @@ export function calculateEvTco(params) {
   const annualCharging = annualEVChargingCost(annualKm, consumptionKwhPer100km, chargingProfile)
   const annualSubscription = (chargingSubscriptionPerMonth || 0) * 12
 
+  // Financieringsrente: verdeeld over de looptijd van de lening
+  const loanYears = financingEnabled && financingTermYears ? financingTermYears : 0
+  const annualFinancing = (financingEnabled && financingInterestTotal && loanYears)
+    ? Math.round(financingInterestTotal / loanYears)
+    : 0
+
   const yearlyResults = []
   let cumulativeCost = wallboxNet  // Laadpaal is jaar 0
 
   for (let yr = 1; yr <= years; yr++) {
     const mrb = calculateMrb(weightKg, 'elektrisch', 2025 + yr - 1)
-    const yearCost = annualCharging + maintenancePerYear + insurancePerYear + mrb + annualSubscription
+    const financing = (financingEnabled && yr <= loanYears) ? annualFinancing : 0
+    const yearCost = annualCharging + maintenancePerYear + insurancePerYear + mrb + annualSubscription + financing
     cumulativeCost += yearCost
 
     yearlyResults.push({
@@ -237,6 +284,7 @@ export function calculateEvTco(params) {
       insurance: insurancePerYear,
       mrb,
       subscription: annualSubscription,
+      financing,
       total: yearCost,
       cumulative: cumulativeCost,
     })
@@ -277,20 +325,23 @@ export function calculateBreakEven(iceTco, evTco, iceCurrentValue, evPurchasePri
 
 /**
  * Break-even met maandprecisie én extrapolatie voorbij de bezitsduur.
- * Geeft {withinPeriod, years, months} of null (nooit break-even).
+ * @param config {{ oppCostEnabled, oppCostRate }} — optionele vermogenskosten
+ * @returns {{withinPeriod, years, months}|null}
  */
-export function calculateBreakEvenExtended(iceTco, evTco, iceCurrentValue, evPurchasePrice, periodYears, maxYears = 25) {
+export function calculateBreakEvenExtended(iceTco, evTco, iceCurrentValue, evPurchasePrice, periodYears, maxYears = 25, config = {}) {
   const switchCost = evPurchasePrice - (iceCurrentValue || 0)
+  const initialOutlay = switchCost + (evTco.wallboxNet || 0)
+  const { oppCostEnabled, oppCostRate } = config
 
   let prevIceCum = 0
-  let prevEvCum = switchCost + (evTco.wallboxNet || 0)  // jaar-0 staat
+  let prevEvCum = initialOutlay  // jaar-0 staat
 
   for (let i = 0; i < periodYears; i++) {
     const iceCum = iceTco.yearly[i]?.cumulative ?? 0
-    const evCum = (evTco.yearly[i]?.cumulative ?? 0) + switchCost
+    const oppCost = oppCostEnabled ? cumulativeOpportunityCost(initialOutlay, oppCostRate, i + 1) : 0
+    const evCum = (evTco.yearly[i]?.cumulative ?? 0) + switchCost + oppCost
 
     if (evCum <= iceCum) {
-      // Lineaire interpolatie voor maandprecisie
       const gapBefore = Math.max(0, prevEvCum - prevIceCum)
       const gapAfter  = Math.max(0, iceCum - evCum)
       const fraction  = gapBefore + gapAfter > 0 ? gapBefore / (gapBefore + gapAfter) : 0
@@ -303,9 +354,14 @@ export function calculateBreakEvenExtended(iceTco, evTco, iceCurrentValue, evPur
     prevEvCum  = evCum
   }
 
-  // Extrapoleer voorbij bezitsduur met vaste jaarkosten (MRB is gestabiliseerd na 2028)
+  // Extrapoleer met vaste jaarkosten (MRB gestabiliseerd na 2028)
   const annualIce = iceTco.yearly[periodYears - 1]?.total ?? 0
-  const annualEv  = evTco.yearly[periodYears - 1]?.total ?? 0
+  // Opportunity cost in laatste jaar = verschil tussen jaar N en N-1
+  const lastOppCost = oppCostEnabled
+    ? cumulativeOpportunityCost(initialOutlay, oppCostRate, periodYears)
+      - cumulativeOpportunityCost(initialOutlay, oppCostRate, periodYears - 1)
+    : 0
+  const annualEv = (evTco.yearly[periodYears - 1]?.total ?? 0) + lastOppCost
   const annualSaving = annualIce - annualEv
 
   if (annualSaving <= 0) return null
@@ -328,24 +384,25 @@ export function calculateBreakEvenExtended(iceTco, evTco, iceCurrentValue, evPur
 
 /**
  * Bouwt data op voor Recharts break-even grafiek
+ * @param config {{ oppCostEnabled, oppCostRate }}
  */
-export function buildChartData(iceTco, evTco, iceCurrentValue, evPurchasePrice, years) {
+export function buildChartData(iceTco, evTco, iceCurrentValue, evPurchasePrice, years, config = {}) {
   const switchCost = evPurchasePrice - (iceCurrentValue || 0)
+  const initialOutlay = switchCost + (evTco.wallboxNet || 0)
+  const { oppCostEnabled, oppCostRate } = config
 
-  // Jaar 0: only the upfront investment (EV purchase - ICE resale + wallbox).
-  // wallboxNet is already included in evTco.yearly[*].cumulative, so subtract it here
-  // to avoid double-counting. evTco.yearly[0].cumulative = wallboxNet + year1Running.
   const data = [{
     jaar: 0,
     huidigeAuto: 0,
-    EV: Math.round(switchCost + (evTco.wallboxNet || 0)),
+    EV: Math.round(initialOutlay),
   }]
 
   for (let i = 0; i < years; i++) {
+    const oppCost = oppCostEnabled ? cumulativeOpportunityCost(initialOutlay, oppCostRate, i + 1) : 0
     data.push({
       jaar: i + 1,
       huidigeAuto: iceTco.yearly[i]?.cumulative || 0,
-      EV: (evTco.yearly[i]?.cumulative || 0) + switchCost,
+      EV: (evTco.yearly[i]?.cumulative || 0) + switchCost + oppCost,
     })
   }
 

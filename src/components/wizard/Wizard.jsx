@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import useAppStore from '../../store/useAppStore'
+const track = (name, p) => import('../../utils/stats.js').then(m => m.trackEvent(name, p)).catch(() => {})
 import Step1Voertuig from '../steps/Step1Voertuig'
 import Step2Gebruik from '../steps/Step2Gebruik'
 import Step3EvKeuze from '../steps/Step3EvKeuze'
@@ -18,6 +20,10 @@ export default function Wizard() {
   const nextStep = useAppStore(s => s.nextStep)
   const prevStep = useAppStore(s => s.prevStep)
   const goToStep = useAppStore(s => s.goToStep)
+
+  useEffect(() => {
+    track('step_view', { step: currentStep + 1, step_name: STEPS[currentStep]?.label })
+  }, [currentStep])
 
   const StepComponent = STEPS[currentStep]?.component || null
 

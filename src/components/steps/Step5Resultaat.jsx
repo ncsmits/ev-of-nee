@@ -1,16 +1,19 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   Legend, ResponsiveContainer, ReferenceLine
 } from 'recharts'
 import useAppStore from '../../store/useAppStore'
 import StepShell from '../ui/StepShell'
+const trackResultAsync = (p) => import('../../utils/stats.js').then(m => m.trackResult(p)).catch(() => {})
 import {
   calculateIceTco,
   calculateEvTco,
   calculateBreakEven,
   calculateBreakEvenExtended,
   buildChartData,
+  calculateFinancingInterest,
+  cumulativeOpportunityCost,
 } from '../../utils/calculations'
 
 function usePrefersDark() {
@@ -34,10 +37,16 @@ export default function Step5Resultaat({ onBack }) {
   const evVehicle = useAppStore(s => s.evVehicle)
   const evCosts = useAppStore(s => s.evCosts)
   const evIsNew = useAppStore(s => s.evIsNew)
+  const evFinancing = useAppStore(s => s.evFinancing)
+  const opportunityCost = useAppStore(s => s.opportunityCost)
   const isDark = usePrefersDark()
 
-  const { iceTco, evTco, breakEven, breakEvenDetails, chartData, switchCost, monthlySaving, avg } = useMemo(() => {
+  const { iceTco, evTco, breakEvenDetails, chartData, switchCost, monthlySaving, avg } = useMemo(() => {
     if (!iceCosts.consumptionLper100km || !evCosts.purchasePrice) return {}
+
+    const financingInterestTotal = evFinancing.enabled
+      ? calculateFinancingInterest(evCosts.purchasePrice, evFinancing.termYears, evFinancing.interestRatePercent)
+      : 0
 
     const ice = calculateIceTco({
       annualKm,
@@ -66,51 +75,70 @@ export default function Step5Resultaat({ onBack }) {
       chargingSubscriptionPerMonth: evCosts.chargingSubscriptionPerMonth,
       seppSubsidy: evCosts.seppSubsidy,
       seppApplicable: evCosts.seppApplicable,
+      financingEnabled: evFinancing.enabled,
+      financingTermYears: evFinancing.termYears,
+      financingInterestTotal,
     })
 
-    const be = calculateBreakEven(
-      ice, ev,
-      iceVehicle.estimatedCurrentValue,
-      evCosts.purchasePrice,
-      ownershipYears
-    )
-
-    const chart = buildChartData(
-      ice, ev,
-      iceVehicle.estimatedCurrentValue,
-      evCosts.purchasePrice,
-      ownershipYears
-    )
+    const oppConfig = {
+      oppCostEnabled: opportunityCost.enabled,
+      oppCostRate: opportunityCost.annualReturnPercent,
+    }
 
     const sc = evCosts.purchasePrice - (iceVehicle.estimatedCurrentValue || 0)
-    const annualSaving = ice.totalCost / ownershipYears - ev.totalCost / ownershipYears
-    const monthly = Math.round(annualSaving / 12)
+    const initialOutlay = sc + (ev.wallboxNet || 0)
+
+    const chart = buildChartData(ice, ev, iceVehicle.estimatedCurrentValue, evCosts.purchasePrice, ownershipYears, oppConfig)
 
     const beDetails = calculateBreakEvenExtended(
       ice, ev,
       iceVehicle.estimatedCurrentValue,
       evCosts.purchasePrice,
       ownershipYears,
+      25,
+      oppConfig,
     )
 
+    const annualSaving = ice.totalCost / ownershipYears - ev.totalCost / ownershipYears
+    const monthly = Math.round(annualSaving / 12)
+
+    const avgOppCost = opportunityCost.enabled
+      ? Math.round(cumulativeOpportunityCost(initialOutlay, opportunityCost.annualReturnPercent, ownershipYears) / ownershipYears)
+      : 0
+
     const avg = {
-      iceMrb:  Math.round(ice.yearly.reduce((s, y) => s + y.mrb, 0) / ownershipYears),
-      evMrb:   Math.round(ev.yearly.reduce((s, y) => s + y.mrb, 0) / ownershipYears),
-      iceTotal: Math.round(ice.totalCost / ownershipYears),
-      evTotal:  Math.round((ev.totalCost - ev.wallboxNet) / ownershipYears),
+      iceMrb:    Math.round(ice.yearly.reduce((s, y) => s + y.mrb, 0) / ownershipYears),
+      evMrb:     Math.round(ev.yearly.reduce((s, y) => s + y.mrb, 0) / ownershipYears),
+      iceTotal:  Math.round(ice.totalCost / ownershipYears),
+      evTotal:   Math.round((ev.totalCost - ev.wallboxNet) / ownershipYears),
+      evFinancing: Math.round(ev.yearly.reduce((s, y) => s + (y.financing || 0), 0) / ownershipYears),
+      evOppCost: avgOppCost,
     }
 
     return {
       iceTco: ice,
       evTco: ev,
-      breakEven: be,
       breakEvenDetails: beDetails,
       chartData: chart,
       switchCost: sc,
       monthlySaving: monthly,
       avg,
     }
-  }, [annualKm, ownershipYears, iceVehicle, iceCosts, evVehicle, evCosts, evIsNew])
+  }, [annualKm, ownershipYears, iceVehicle, iceCosts, evVehicle, evCosts, evIsNew, evFinancing, opportunityCost])
+
+  const trackedRef = useRef(false)
+  useEffect(() => {
+    if (!iceTco || !evTco || trackedRef.current) return
+    trackedRef.current = true
+    trackResultAsync({
+      annualKm,
+      evPurchasePrice: evCosts.purchasePrice,
+      fuelType: iceVehicle.fuelType,
+      breakEvenDetails,
+      financingEnabled: evFinancing.enabled,
+      oppCostEnabled: opportunityCost.enabled,
+    })
+  }, [iceTco, evTco])
 
   if (!iceTco || !evTco) {
     return (
@@ -192,6 +220,7 @@ export default function Step5Resultaat({ onBack }) {
         </h4>
         <p className="text-xs text-neutral-400 dark:text-neutral-500 mb-3">
           Jaar 0 = initiële investering (aanschaf EV − opbrengst huidige auto + laadpaal). Lopende kosten tellen daarna op.
+          {opportunityCost.enabled && ' Inclusief gemist beleggingsrendement.'}
         </p>
         <ResponsiveContainer width="100%" height={260}>
           <LineChart data={chartData} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
@@ -225,22 +254,8 @@ export default function Step5Resultaat({ onBack }) {
                 label={{ value: 'Break-even', fill: '#16a34a', fontSize: 11 }}
               />
             )}
-            <Line
-              type="monotone"
-              dataKey="huidigeAuto"
-              name="Huidige auto"
-              stroke="#ea580c"
-              strokeWidth={2.5}
-              dot={false}
-            />
-            <Line
-              type="monotone"
-              dataKey="EV"
-              name="Elektrische auto (EV)"
-              stroke="#16a34a"
-              strokeWidth={2.5}
-              dot={false}
-            />
+            <Line type="monotone" dataKey="huidigeAuto" name="Huidige auto" stroke="#ea580c" strokeWidth={2.5} dot={false} />
+            <Line type="monotone" dataKey="EV" name="Elektrische auto (EV)" stroke="#16a34a" strokeWidth={2.5} dot={false} />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -261,28 +276,24 @@ export default function Step5Resultaat({ onBack }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100 dark:divide-neutral-700">
-              <TRow label="Brandstof / laden"
-                ice={iceTco.yearly[0]?.fuel}
-                ev={evTco.yearly[0]?.charging} />
-              <TRow label="Onderhoud"
-                ice={iceCosts.maintenancePerYear}
-                ev={evCosts.maintenancePerYear} />
-              <TRow label="Verzekering"
-                ice={iceCosts.insurancePerYear}
-                ev={evCosts.insurancePerYear} />
-              <TRow label="Motorrijtuigenbelasting"
-                ice={avg?.iceMrb}
-                ev={avg?.evMrb} />
-              <TRow label="Laadabonnement"
-                ice={0}
-                ev={(evCosts.chargingSubscriptionPerMonth || 0) * 12} />
+              <TRow label="Brandstof / laden" ice={iceTco.yearly[0]?.fuel} ev={evTco.yearly[0]?.charging} />
+              <TRow label="Onderhoud" ice={iceCosts.maintenancePerYear} ev={evCosts.maintenancePerYear} />
+              <TRow label="Verzekering" ice={iceCosts.insurancePerYear} ev={evCosts.insurancePerYear} />
+              <TRow label="Motorrijtuigenbelasting" ice={avg?.iceMrb} ev={avg?.evMrb} />
+              <TRow label="Laadabonnement" ice={0} ev={(evCosts.chargingSubscriptionPerMonth || 0) * 12} />
+              {evFinancing.enabled && avg?.evFinancing > 0 && (
+                <TRow label="Financieringsrente" ice={0} ev={avg.evFinancing} />
+              )}
+              {opportunityCost.enabled && avg?.evOppCost > 0 && (
+                <TRow label={`Gemist rendement (${opportunityCost.annualReturnPercent}%/j)`} ice={0} ev={avg.evOppCost} />
+              )}
               <tr className="border-t-2 border-neutral-300 dark:border-neutral-600">
                 <td className="py-2 font-semibold text-neutral-900 dark:text-neutral-50">Gemiddeld per jaar</td>
                 <td className="py-2 text-right font-semibold text-orange-600">
                   € {(avg?.iceTotal || 0).toLocaleString('nl-NL')}
                 </td>
                 <td className="py-2 text-right font-semibold text-green-700 dark:text-green-500">
-                  € {(avg?.evTotal || 0).toLocaleString('nl-NL')}
+                  € {((avg?.evTotal || 0) + (avg?.evFinancing || 0) + (avg?.evOppCost || 0)).toLocaleString('nl-NL')}
                 </td>
               </tr>
             </tbody>
@@ -310,8 +321,8 @@ function KpiCard({ label, value, sub, color }) {
   return (
     <div className={`rounded-xl border p-3 ${colors[color] || colors.neutral}`}>
       <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">{label}</p>
-      <p className="text-lg font-bold text-neutral-900 dark:text-neutral-50" style={{ fontFamily: 'var(--font-display)' }}>{value}</p>
-      <p className="text-xs text-neutral-400 dark:text-neutral-500">{sub}</p>
+      <p className="text-base font-bold text-neutral-900 dark:text-neutral-50 leading-tight" style={{ fontFamily: 'var(--font-display)' }}>{value}</p>
+      <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-0.5">{sub}</p>
     </div>
   )
 }

@@ -17,6 +17,19 @@ const defaultIceCosts = {
   annualKm: 15000,
 }
 
+// Default financing settings
+const defaultEvFinancing = {
+  enabled: false,
+  termYears: 5,
+  interestRatePercent: 5.9,   // typisch NL autolening 2025
+}
+
+// Default opportunity cost settings
+const defaultOpportunityCost = {
+  enabled: false,
+  annualReturnPercent: 6,     // historisch gemiddeld aandelenrendement
+}
+
 // Default EV costs
 const defaultEvCosts = {
   purchasePrice: 0,
@@ -67,6 +80,10 @@ const useAppStore = create(
         purchasePrice: null,
       },
       evCosts: { ...defaultEvCosts },
+
+      // === FINANCIERING & VERMOGENSKOSTEN ===
+      evFinancing: { ...defaultEvFinancing },
+      opportunityCost: { ...defaultOpportunityCost },
 
       // === GEBRUIKSPROFIEL ===
       annualKm: 15000,
@@ -139,13 +156,21 @@ const useAppStore = create(
         return { evCosts: { ...state.evCosts, chargingProfile: profile } }
       }),
 
+      // === ACTIONS: Financiering & vermogenskosten ===
+      updateEvFinancing: (fields) => set(state => ({
+        evFinancing: { ...state.evFinancing, ...fields }
+      })),
+      updateOpportunityCost: (fields) => set(state => ({
+        opportunityCost: { ...state.opportunityCost, ...fields }
+      })),
+
       // === ACTIONS: Gebruiksprofiel ===
       setAnnualKm: (km) => set({ annualKm: km }),
       setOwnershipYears: (years) => set({ ownershipYears: years }),
 
       // === RESET ===
       reset: () => set({
-        hasStarted: true,   // stay in wizard after reset, don't go back to landing
+        hasStarted: true,
         currentStep: 0,
         iceLicensePlate: '',
         iceVehicleData: null,
@@ -158,6 +183,8 @@ const useAppStore = create(
         evCosts: { ...defaultEvCosts },
         annualKm: 15000,
         ownershipYears: 5,
+        evFinancing: { ...defaultEvFinancing },
+        opportunityCost: { ...defaultOpportunityCost },
       }),
     }),
     {
@@ -177,6 +204,8 @@ const useAppStore = create(
         evCosts: state.evCosts,
         annualKm: state.annualKm,
         ownershipYears: state.ownershipYears,
+        evFinancing: state.evFinancing,
+        opportunityCost: state.opportunityCost,
       }),
     }
   )

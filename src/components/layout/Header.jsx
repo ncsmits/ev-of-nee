@@ -17,14 +17,16 @@ export default function Header() {
             EV of Nee?
           </span>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
           <FeedbackButton />
           {hasStarted && (
             <button
               onClick={() => { if (confirm('Opnieuw beginnen? Alle ingevoerde data wordt gewist.')) reset() }}
               className="text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-50 transition-colors"
+              title="Opnieuw beginnen"
             >
-              Opnieuw beginnen
+              <span className="hidden sm:inline">Opnieuw beginnen</span>
+              <span className="sm:hidden text-base">↺</span>
             </button>
           )}
         </div>

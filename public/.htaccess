@@ -1,5 +1,12 @@
 Options -MultiViews
 AddType image/svg+xml .svg
+
 RewriteEngine On
+
+# www → non-www (301)
+RewriteCond %{HTTP_HOST} ^www\.evofnee\.nl [NC]
+RewriteRule ^(.*)$ https://evofnee.nl/$1 [R=301,L]
+
+# SPA fallback
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^ index.html [QSA,L]

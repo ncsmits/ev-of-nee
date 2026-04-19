@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import useAppStore from '../../store/useAppStore'
 import { fetchVehicleInfo, estimateCurrentValue } from '../../api/rdw'
+const track = (name, p) => import('../../utils/stats.js').then(m => m.trackEvent(name, p)).catch(() => {})
 import StepShell from '../ui/StepShell'
 import LicensePlateInput from '../ui/LicensePlateInput'
 import FieldRow from '../ui/FieldRow'
@@ -48,6 +49,7 @@ export default function Step1Voertuig({ onNext, onBack }) {
       if (info.consumptionLper100km) {
         updateIceCosts({ consumptionLper100km: info.consumptionLper100km })
       }
+      track('vehicle_lookup', { fuel_type: (info.fuelType || 'onbekend').toLowerCase() })
       setManualMode(false)
     } catch (err) {
       setError(err.message)
@@ -57,6 +59,7 @@ export default function Step1Voertuig({ onNext, onBack }) {
   }
 
   function enableManual() {
+    track('vehicle_manual')
     setManualMode(true)
     if (!iceVehicle.brand) {
       updateIceVehicle({ brand: ' ', model: '', year: null, fuelType: 'Benzine', weightKg: null })
@@ -64,7 +67,8 @@ export default function Step1Voertuig({ onNext, onBack }) {
   }
 
   const hasVehicle = !!iceVehicle.brand?.trim()
-  const canContinue = hasVehicle && iceCosts.consumptionLper100km
+  const isElectric = (iceVehicle.fuelType || '').toLowerCase().includes('elektr')
+  const canContinue = hasVehicle && iceCosts.consumptionLper100km && !isElectric
 
   return (
     <StepShell
@@ -111,6 +115,15 @@ export default function Step1Voertuig({ onNext, onBack }) {
           >
             merk en model handmatig invullen
           </button>
+        </div>
+      )}
+
+      {/* EV warning */}
+      {isElectric && (
+        <div className="bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-4">
+          <p className="text-sm font-medium text-red-700 dark:text-red-400">
+            ⚠️ Dit voertuig is een elektrische auto. EV of Nee? vergelijkt een brandstofauto met een EV — niet EV met EV. Vul een benzine-, diesel- of LPG-auto in.
+          </p>
         </div>
       )}
 

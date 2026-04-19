@@ -60,11 +60,15 @@
 - [x] Feedback button in header (mailto modal)
 - [x] animate-fade-in animatie gedefinieerd in CSS
 - [x] Klikbare voltooide stappen in voortgangsbalk (directe navigatie)
-- [ ] Deel-URL (encoded state in query params)
-- [ ] PDF export
 - [ ] Mobielvriendelijk getest
 
-## Fase 3 — Backlog
+## Fase 3 — Berekeningen uitbreiden (versie 1.2)
+- [ ] Financieringskosten (togglebaar, annuïteitenmethode)
+- [ ] Alternatief rendement / vermogenskosten (togglebaar)
+- [ ] Mobielvriendelijkheid doorlopen en fixen
+
+## Fase 4 — Backlog
+- [ ] Deel-URL (encoded state in query params) — nice to have
 - [ ] Live brandstofprijs ophalen (CORS-vriendelijke API zoeken)
 - [ ] Marktplaats / AutoTrack deeplinks vanuit EV-selectie
 - [ ] EV-suggesties o.b.v. budget & profiel (3 auto's)

@@ -1,4 +1,5 @@
 import useAppStore from '../../store/useAppStore'
+const track = (name, p) => import('../../utils/stats.js').then(m => m.trackEvent(name, p)).catch(() => {})
 
 const STEPS_OVERVIEW = [
   { icon: '🚗', title: 'Jouw huidige auto', desc: 'Kenteken opzoeken of handmatig invullen' },
@@ -9,6 +10,11 @@ const STEPS_OVERVIEW = [
 export default function LandingPage() {
   const startWizard = useAppStore(s => s.startWizard)
 
+  function handleStart() {
+    track('wizard_start')
+    startWizard()
+  }
+
   return (
     <div className="animate-fade-in py-8">
       {/* Hero */}
@@ -17,12 +23,12 @@ export default function LandingPage() {
           <span className="text-3xl">⚡</span>
         </div>
         <h1
-          className="text-4xl font-bold text-neutral-900 dark:text-neutral-50 mb-4 leading-tight"
+          className="text-3xl sm:text-4xl font-bold text-neutral-900 dark:text-neutral-50 mb-4 leading-tight"
           style={{ fontFamily: 'var(--font-display)' }}
         >
           Is een elektrische auto<br />iets voor jou?
         </h1>
-        <p className="text-lg text-neutral-600 dark:text-neutral-400 max-w-lg mx-auto leading-relaxed">
+        <p className="text-base sm:text-lg text-neutral-600 dark:text-neutral-400 max-w-lg mx-auto leading-relaxed">
           Vergelijk de totale kosten van jouw huidige auto met een EV.
           We berekenen brandstof, laadkosten, MRB, onderhoud en wanneer je break-even draait.
         </p>
@@ -45,7 +51,7 @@ export default function LandingPage() {
       {/* CTA */}
       <div className="text-center mb-8">
         <button
-          onClick={startWizard}
+          onClick={handleStart}
           className="px-8 py-3.5 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900
                      rounded-xl text-base font-semibold
                      hover:bg-neutral-700 dark:hover:bg-neutral-200
@@ -57,7 +63,7 @@ export default function LandingPage() {
 
       {/* Privacy note */}
       <p className="text-center text-xs text-neutral-400 dark:text-neutral-500">
-        🔒 Alle gegevens blijven in jouw browser — er wordt niets opgeslagen op een server.
+        🔒 Jouw invoer blijft lokaal in jouw browser. Met toestemming meten we anoniem gebruik om de tool te verbeteren — geen advertenties, geen profiling.
       </p>
     </div>
   )
